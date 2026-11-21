@@ -1,0 +1,23 @@
+# Carpetas generadas y caché de Flutter / Dart
+.dart_tool/
+.packages
+build/
+.flutter-plugins
+.flutter-plugins-dependencies
+coverage/
+
+# Configuración local de editores (VS Code / Android Studio / IntelliJ)
+.idea/
+.vscode/
+*.iml
+
+# Archivos del sistema y logs
+.DS_Store
+*.log
+
+# Secretos y credenciales (requisito del PDF)
+.env
+*.env
+*.key
+*.keystore
+*.jks
