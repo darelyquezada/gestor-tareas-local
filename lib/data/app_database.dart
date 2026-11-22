@@ -37,4 +37,27 @@ class AppDatabase extends _$AppDatabase {
       TareasCompanion.insert(titulo: tituloLimpio),
     );
   }
+
+  // Actualización de estado
+  Future<int> actualizarEstadoTarea(int id, bool completada) {
+    return (update(tareas)..where((t) => t.id.equals(id))).write( 
+      TareasCompanion(completada: Value(completada)),
+    );
+  }
+
+  // Edición de título
+  Future<int> actualizarTituloTarea(int id, String nuevoTitulo) {
+    final tituloLimpio = nuevoTitulo.trim();
+    if (tituloLimpio.isEmpty) {
+      throw ArgumentError('El título de la tarea no puede estar vacío.');
+    }
+    return (update(tareas)..where((t) => t.id.equals(id))).write(
+      TareasCompanion(titulo: Value(tituloLimpio)),
+    );
+  }
+
+  // Baja: borra el registro específico por su ID
+  Future<int> eliminarTarea(int id) {
+    return (delete(tareas)..where((t) => t.id.equals(id))).go();
+  }
 }

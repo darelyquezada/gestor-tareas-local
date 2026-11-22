@@ -11,8 +11,8 @@ class TareasPage extends StatefulWidget {
 }
 
 class _TareasPageState extends State<TareasPage> {
-  final TextEditingController _tituloController = TextEditingController();
-  late final Stream<List<Tarea>> _tareasStream;
+  final TextEditingController _tituloController = TextEditingController(); // controlador para el campo título 
+  late final Stream<List<Tarea>> _tareasStream; // Stream que emite la lista de tareas actualizadas
 
   @override
   void initState() {
@@ -30,23 +30,82 @@ class _TareasPageState extends State<TareasPage> {
 
     try {
       await widget.database.insertarTarea(titulo);
-      _tituloController.clear();
+      _tituloController.clear(); // limpia el campo 
     } catch (e) {
-      if (!mounted) return;
+      if (!mounted) return; // protege contra llamadas asíncronas si el widget fue desmontado
       _mostrarMensaje('Error al guardar la tarea: $e');
     }
   }
 
-  void _alternarCompletada(Tarea tarea, bool completada) {
-    _mostrarMensaje('Implementar actualización de tarea');
+  Future<void> _alternarCompletada(Tarea tarea, bool completada) async {
+    try {
+      await widget.database.actualizarEstadoTarea(tarea.id, completada);
+    } catch (e) {
+      if (!mounted) return;
+      _mostrarMensaje('Error al actualizar el estado: $e');
+    }
   }
 
-  void _editarTarea(Tarea tarea) {
-    _mostrarMensaje('Implementar edición de título');
+  /// Muestra un AlertDialog para modificar el título de una tarea existente
+  Future<void> _editarTarea(Tarea tarea) async {
+    final editController = TextEditingController(text: tarea.titulo); // controlador con el título actual
+
+    // Despliega el diálogo y espera la acción del usuario (guardar o cancelar)
+    final nuevoTitulo = await showDialog<String>(
+      context: context,
+      builder: (dialogContext) {
+        final editController = TextEditingController(text: tarea.titulo);
+        return AlertDialog(
+          title: const Text('Editar tarea'),
+          content: TextField(
+            controller: editController,
+            autofocus: true,
+            decoration: const InputDecoration(
+              labelText: 'Título de la tarea',
+              border: OutlineInputBorder(),
+            ),
+            // Permite confirmar la edición al presionar Enter en el teclado
+            onSubmitted: (valor) => Navigator.of(dialogContext).pop(valor),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(), // Cierra sin devolver datos
+              child: const Text('Cancelar'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(dialogContext).pop(editController.text), // Devuelve el nuevo texto
+              child: const Text('Guardar'),
+            ),
+          ],
+        );
+      },
+    );
+
+    // Si no hay título nuevo, no se hace nada
+    if (nuevoTitulo == null) return;
+
+    final tituloLimpio = nuevoTitulo.trim();
+    if (tituloLimpio.isEmpty) {
+      if (!mounted) return;
+      _mostrarMensaje('El título no puede estar vacío');
+      return;
+    }
+
+    try {
+      await widget.database.actualizarTituloTarea(tarea.id, tituloLimpio);
+    } catch (e) {
+      if (!mounted) return;
+      _mostrarMensaje('Error al editar la tarea: $e');
+    }
   }
 
-  void _eliminarTarea(Tarea tarea) {
-    _mostrarMensaje('Implementar eliminación de tarea');
+  Future<void> _eliminarTarea(Tarea tarea) async {
+    try {
+      await widget.database.eliminarTarea(tarea.id);
+    } catch (e) {
+      if (!mounted) return;
+      _mostrarMensaje('Error al eliminar la tarea: $e');
+    }
   }
 
   void _mostrarMensaje(String mensaje) {
@@ -57,6 +116,7 @@ class _TareasPageState extends State<TareasPage> {
 
   @override
   void dispose() {
+    // Liberación de recursos para prevenir fugas de memoria
     _tituloController.dispose();
     widget.database.close(); // Cerrar la conexión con BD
     super.dispose();
@@ -87,6 +147,7 @@ class _TareasPageState extends State<TareasPage> {
             const SizedBox(height: 12),
             const Text('Mis tareas', style: TextStyle(fontSize: 18)),
             const SizedBox(height: 8),
+            // Vista reactiva que escucha los cambios del Stream y se redibuja automáticamente
             Expanded(
               child: StreamBuilder<List<Tarea>>(
                 stream: _tareasStream,
@@ -113,7 +174,15 @@ class _TareasPageState extends State<TareasPage> {
                                       }
                                     },
                                   ),
-                                  title: Text(tarea.titulo),
+                                  // Título con estilo tachado si la tarea ya fue completada
+                                  title: Text(
+                                    tarea.titulo,
+                                    style: TextStyle(
+                                      decoration: tarea.completada
+                                          ? TextDecoration.lineThrough
+                                          : null,
+                                    ),
+                                  ),
                                   subtitle: Text('ID: ${tarea.id}'),
                                   trailing: Row(
                                     mainAxisSize: MainAxisSize.min,
@@ -143,3 +212,4 @@ class _TareasPageState extends State<TareasPage> {
     );
   }
 }
+
