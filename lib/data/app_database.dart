@@ -1,4 +1,7 @@
 import 'package:drift/drift.dart';
+import 'package:drift_flutter/drift_flutter.dart';
+
+part 'app_database.g.dart';
 
 class Tareas extends Table {
   // ID único autoincremental (Llave primaria)
@@ -9,4 +12,29 @@ class Tareas extends Table {
 
   // Estado booleano mapeado como 0/1, falso por defecto
   BoolColumn get completada => boolean().withDefault(const Constant(false))();
+}
+
+@DriftDatabase(tables: [Tareas])
+class AppDatabase extends _$AppDatabase {
+  AppDatabase([QueryExecutor? executor])
+      : super(executor ?? driftDatabase(name: 'tareas_db'));
+
+  @override
+  int get schemaVersion => 1;
+
+  // Consulta reactiva Stream
+  Stream<List<Tarea>> watchTareas() {
+    return (select(tareas)..orderBy([(t) => OrderingTerm.asc(t.id)])).watch();
+  }
+
+  // Alta: valida que el título no esté vacío y lo guarda en SQLite
+  Future<int> insertarTarea(String titulo) {
+    final tituloLimpio = titulo.trim();
+    if (tituloLimpio.isEmpty) {
+      throw ArgumentError('El título de la tarea no puede estar vacío.');
+    }
+    return into(tareas).insert(
+      TareasCompanion.insert(titulo: tituloLimpio),
+    );
+  }
 }

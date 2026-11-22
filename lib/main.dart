@@ -1,14 +1,18 @@
 import 'package:flutter/material.dart';
 import 'screens/tareas_page.dart';
+import 'data/app_database.dart';
 
 void main() {
-  runApp(const GestorTareasApp());
+  WidgetsFlutterBinding.ensureInitialized();
+  final database = AppDatabase();
+  runApp(GestorTareasApp(database: database));
 }
 
-/// Punto de entrada de la aplicación.
-/// La configuración del almacenamiento se agregará como parte de la tarea.
+/// Punto de entrada de la aplicación con persistencia local SQLite (Drift)
 class GestorTareasApp extends StatelessWidget {
-  const GestorTareasApp({super.key});
+  final AppDatabase? database;
+
+  const GestorTareasApp({super.key, this.database});
 
   @override
   Widget build(BuildContext context) {
@@ -19,7 +23,7 @@ class GestorTareasApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.indigo),
         useMaterial3: true,
       ),
-      home: const TareasPage(),
+      home: TareasPage(database: database ?? AppDatabase()),
     );
   }
 }
