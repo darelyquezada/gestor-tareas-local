@@ -48,8 +48,6 @@ class _TareasPageState extends State<TareasPage> {
 
   /// Muestra un AlertDialog para modificar el título de una tarea existente
   Future<void> _editarTarea(Tarea tarea) async {
-    final editController = TextEditingController(text: tarea.titulo); // controlador con el título actual
-
     // Despliega el diálogo y espera la acción del usuario (guardar o cancelar)
     final nuevoTitulo = await showDialog<String>(
       context: context,
